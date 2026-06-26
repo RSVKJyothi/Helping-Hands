@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helping Hands — Book Ticket</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--surface:#121518;--surface2:#1a1e24;--border:#252b34;
+  --accent:#00e5b0;--danger:#ff4757;--warning:#ffa502;--purple:#5352ed;--blue:#00c2ff;
+  --text:#e8eaed;--muted:#6b7280;
+}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+.app{max-width:500px;margin:0 auto;padding:24px 16px 60px}
+
+.header{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.title{font-size:18px;font-weight:800}
+.sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+.lbl{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:block}
+
+.trip-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.trip-name{font-size:16px;font-weight:800;margin-bottom:4px}
+.trip-meta{font-size:12px;color:var(--muted)}
+.trip-route{font-size:13px;color:var(--accent);margin-top:6px;font-weight:600}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+select option{background:var(--surface2)}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+.otp-row{display:flex;gap:8px;margin-bottom:10px}
+.otp-row input{flex:1;padding:11px 13px}
+.btn-sm{padding:10px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;flex-shrink:0}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+.otp-box{background:rgba(0,229,176,.08);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--accent);margin-bottom:10px;display:none;font-family:'Space Mono',monospace}
+.verified-msg{font-size:12px;color:var(--accent);margin-bottom:10px;display:none}
+
+/* Reason buttons */
+.reason-grid-book{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.reason-btn-book{padding:10px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:.15s}
+.reason-btn-book.selected{border-color:var(--danger);color:var(--danger);background:rgba(255,71,87,.08)}
+
+/* Photo upload */
+.photo-upload-box{background:var(--surface2);border:1px dashed var(--border);border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:10px}
+.photo-upload-box:hover{border-color:var(--accent)}
+.choose-btn{display:inline-block;padding:8px 18px;background:var(--surface);border:1px solid var(--accent);border-radius:8px;font-size:12px;font-weight:700;color:var(--accent);margin-top:6px;pointer-events:none}
+
+/* Price + pay */
+.price-box{background:linear-gradient(135deg,rgba(0,229,176,.08),rgba(83,82,237,.08));border:1px solid rgba(0,229,176,.2);border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.price-lbl{font-size:11px;color:var(--muted)}
+.price-val{font-size:22px;font-weight:800;color:var(--accent)}
+.btn-pay{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:opacity .15s}
+.btn-pay:hover{opacity:.9}
+.demo-note{font-size:10px;color:var(--muted);text-align:center;margin-top:10px;font-family:'Space Mono',monospace}
+
+/* Success screen */
+.success-screen{display:none;text-align:center;padding:40px 20px}
+.success-icon{font-size:56px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:800;color:var(--accent);margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.ticket-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:left;margin-bottom:20px}
+.ticket-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ticket-row:last-child{border-bottom:none}
+.ticket-key{color:var(--muted)}
+.ticket-val{font-weight:700;color:var(--text)}
+.pnr{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:3px;margin:12px 0}
+.btn-back{padding:12px 24px;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:transparent}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">🤝</div>
+    <div>
+      <div class="title">Book Ticket</div>
+      <div class="sub">Helping Hands — Simulated Booking</div>
+    </div>
+  </div>
+
+  <!-- BOOKING FORM -->
+  <div id="booking-screen">
+
+    <!-- Trip summary -->
+    <div class="trip-card">
+      <div class="trip-name" id="trip-name">Loading...</div>
+      <div class="trip-meta" id="trip-meta"></div>
+      <div class="trip-route" id="trip-route"></div>
+    </div>
+
+    <div class="panel">
+
+      <!-- 1. PASSENGER DETAILS -->
+      <span class="lbl">1 — Passenger Details</span>
+
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="pax-name" placeholder="As per Aadhaar">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="pax-age" placeholder="Age" min="1" max="99">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="pax-gender">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mobile Number</label>
+        <input type="tel" id="pax-phone" placeholder="10-digit mobile number" maxlength="10">
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 2. AADHAAR VERIFICATION -->
+      <span class="lbl">2 — Aadhaar Verification</span>
+
+      <div class="otp-row">
+        <input type="text" id="book-aadhaar" placeholder="12-digit Aadhaar" maxlength="12">
+        <button class="btn-sm" onclick="sendOTP()">Send OTP</button>
+      </div>
+      <div class="otp-box" id="otp-box"></div>
+      <div class="otp-row">
+        <input type="text" id="book-otp" placeholder="Enter OTP" maxlength="6">
+        <button class="btn-sm" onclick="verifyBookOTP()">Verify</button>
+      </div>
+      <div class="verified-msg" id="verified-msg">✅ Aadhaar verified</div>
+
+      <div class="divider"></div>
+
+      <!-- 3. EMERGENCY REASON -->
+      <span class="lbl">3 — Emergency Reason <span style="color:var(--danger)">*Required</span></span>
+      <div class="reason-grid-book">
+        <button class="reason-btn-book" id="br-medical"  onclick="selectBookReason('medical',this)">🏥 Medical</button>
+        <button class="reason-btn-book" id="br-accident" onclick="selectBookReason('accident',this)">🚗 Accident</button>
+        <button class="reason-btn-book" id="br-family"   onclick="selectBookReason('family',this)">👨‍👩‍👧 Family</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 4. PROOF PHOTO -->
+      <span class="lbl">4 — Proof Photo <span style="color:var(--danger)">*Required</span></span>
+      <div id="book-photo-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        Select a reason above to see photo requirements
+      </div>
+
+      <div class="photo-upload-box" onclick="document.getElementById('book-photo-file').click()">
+        <div style="font-size:22px;margin-bottom:6px">📸</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px" id="book-photo-label">Tap to upload proof photo</div>
+        <div class="choose-btn">Choose Photo</div>
+        <input type="file" id="book-photo-file" accept="image/*" style="display:none" onchange="handleBookPhoto(this)">
+      </div>
+
+      <div id="book-photo-preview" style="display:none;margin-bottom:10px">
+        <img id="book-preview-img" style="width:100%;border-radius:9px;border:1px solid var(--border);max-height:200px;object-fit:cover">
+        <div id="book-photo-status" style="font-size:11px;margin-top:6px"></div>
+      </div>
+
+      <div id="book-ai-result" style="display:none;padding:10px;border-radius:8px;font-size:12px;border:1px solid;margin-bottom:10px"></div>
+
+      <!-- Override button — shown when AI says invalid -->
+      <div id="book-override-section" style="display:none;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--warning);margin-bottom:6px">
+          ⚠️ AI flagged this photo. For demo purposes you can still proceed, or upload a clearer photo.
+        </div>
+        <button class="btn-sm" onclick="overrideAndProceed()" style="border-color:var(--warning);color:var(--warning)">
+          Proceed Anyway (Demo Override)
+        </button>
+      </div>
+
+      <!-- GPS — accident only -->
+      <div id="book-gps-section" style="display:none;padding:12px;background:var(--surface2);border-radius:9px;border:1px solid var(--border);margin-bottom:10px">
+        <span class="lbl" style="margin-bottom:6px">📍 Accident Location</span>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Capture the exact accident location — stamped on photo as proof</div>
+        <button class="btn-sm" onclick="captureBookGPS()" style="width:100%;text-align:center">
+          📍 Capture My Current Location
+        </button>
+        <div id="book-gps-result" style="display:none;margin-top:8px;padding:9px;background:rgba(0,229,176,.08);border-radius:7px;font-size:11px;color:var(--accent)"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 5. CLASS / SEAT -->
+      <span class="lbl">5 — Class / Seat</span>
+      <div class="field">
+        <select id="pax-class">
+          <option value="SL">Sleeper (SL) — Economy</option>
+          <option value="3A">AC 3 Tier (3A)</option>
+          <option value="2A">AC 2 Tier (2A)</option>
+          <option value="1A">AC First Class (1A)</option>
+          <option value="GEN">General</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="price-box">
+      <div>
+        <div class="price-lbl">Total Fare</div>
+        <div class="price-val" id="price-display">₹450</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">Simulated booking<br>No real payment</div>
+    </div>
+
+    <button class="btn-pay" onclick="confirmBooking()">Confirm & Pay (Demo)</button>
+    <div class="demo-note">⚠️ This is a simulated booking for demo purposes only</div>
+
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎟️</div>
+    <div class="success-title">Booking Confirmed!</div>
+    <div class="success-sub">Your ticket has been booked successfully.<br>Show this at the station/airport.</div>
+    <div class="ticket-card" id="ticket-card">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace">PNR NUMBER</div>
+        <div class="pnr" id="pnr-number"></div>
+      </div>
+      <div class="ticket-row"><span class="ticket-key">Passenger</span><span class="ticket-val" id="t-name"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Transport</span><span class="ticket-val" id="t-transport"></span></div>
+      <div class="ticket-row"><span class="ticket-key">From → To</span><span class="ticket-val" id="t-route"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Departure</span><span class="ticket-val" id="t-time"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Class</span><span class="ticket-val" id="t-class"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Fare Paid</span><span class="ticket-val" id="t-fare"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Emergency</span><span class="ticket-val" id="t-reason" style="color:var(--danger)"></span></div>
+      <div class="ticket-row"><span class="ticket-key">Status</span><span class="ticket-val" style="color:var(--accent)">CONFIRMED ✓</span></div>
+    </div>
+    <button class="btn-back" onclick="goBack()">← Close & Return to Search</button>
+    <div class="demo-note">⚠️ Simulated ticket — not valid for actual travel</div>
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:8000";
+
+// ── URL params ──
+const params = new URLSearchParams(location.search);
+const tName  = params.get("name")     || "Transport";
+const tType  = params.get("type")     || "Train";
+const tTime  = params.get("time")     || "--";
+const tFrom  = params.get("from")     || "--";
+const tTo    = params.get("to")       || "--";
+const tPrice = params.get("price")    || "₹450";
+const tPlat  = params.get("platform") || "Platform";
+
+// ── State ──
+let otpVerified    = false;
+let bookReason     = params.get("reason") || "";
+let bookGPS        = null;
+let bookPhotoValid = false;
+let photoOverridden= false;
+
+// ── Fill trip info ──
+document.getElementById("trip-name").textContent  = `${tType} — ${tName}`;
+document.getElementById("trip-meta").textContent  = `Platform: ${tPlat}`;
+document.getElementById("trip-route").textContent = `${tFrom} → ${tTo}  |  Departs: ${tTime}`;
+document.getElementById("price-display").textContent = tPrice;
+
+// ── Auto-select reason from URL ──
+window.addEventListener("load", function() {
+  if (bookReason) {
+    const btn = document.getElementById("br-" + bookReason);
+    if (btn) selectBookReason(bookReason, btn);
+  }
+});
+
+// ── Class price update ──
+document.getElementById("pax-class").addEventListener("change", function() {
+  const base = parseInt(tPrice.replace(/[^\d]/g,"")) || 450;
+  const mult = {SL:1,"3A":1.8,"2A":2.5,"1A":4,GEN:0.5};
+  const val  = Math.round(base * (mult[this.value]||1));
+  document.getElementById("price-display").textContent = "₹" + val.toLocaleString("en-IN");
+});
+
+// ── Reason selection ──
+function selectBookReason(reason, btn) {
+  bookReason = reason;
+  document.querySelectorAll(".reason-btn-book").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  const hints = {
+    medical:  "📋 Upload: hospital letter, prescription, or doctor message screenshot",
+    accident: "📸 Upload: accident scene photo — GPS will be stamped automatically",
+    family:   "📄 Upload: any document or message showing the family emergency"
+  };
+  document.getElementById("book-photo-hint").textContent = hints[reason] || "";
+  document.getElementById("book-gps-section").style.display = reason === "accident" ? "block" : "none";
+
+  // Reset photo state when reason changes
+  document.getElementById("book-photo-preview").style.display = "none";
+  document.getElementById("book-ai-result").style.display = "none";
+  document.getElementById("book-override-section").style.display = "none";
+  document.getElementById("book-photo-label").textContent = "Tap to upload proof photo";
+  bookPhotoValid  = false;
+  photoOverridden = false;
+}
+
+// ── OTP ──
+async function sendOTP() {
+  const aadhaar = document.getElementById("book-aadhaar").value.trim();
+  if (aadhaar.length !== 12 || isNaN(aadhaar)) { alert("Enter valid 12-digit Aadhaar"); return; }
+  try {
+    const res  = await fetch(`${API}/request-otp?aadhaar=${aadhaar}`, { method:"POST" });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    const box = document.getElementById("otp-box");
+    box.textContent = `🔐 Your OTP: ${data.otp}  (expires in 5 min)`;
+    box.style.display = "block";
+  } catch { alert("Cannot reach server"); }
+}
+
+async function verifyBookOTP() {
+  const aadhaar = document.getElementById("book-aadhaar").value.trim();
+  const otp     = document.getElementById("book-otp").value.trim();
+  if (!aadhaar || !otp) { alert("Enter Aadhaar and OTP"); return; }
+  try {
+    const res  = await fetch(`${API}/verify-otp?aadhaar=${aadhaar}&otp=${otp}`, { method:"POST" });
+    const data = await res.json();
+    if (data.verified) {
+      otpVerified = true;
+      document.getElementById("verified-msg").style.display = "block";
+      document.getElementById("otp-box").style.display = "none";
+    } else { alert(data.error || "OTP failed"); }
+  } catch { alert("Cannot reach server"); }
+}
+
+// ── GPS capture ──
+function captureBookGPS() {
+  const result = document.getElementById("book-gps-result");
+  result.style.display = "block";
+  result.textContent = "⏳ Getting location...";
+  if (!navigator.geolocation) { result.textContent = "⚠️ GPS not supported"; return; }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      bookGPS = {
+        lat:       pos.coords.latitude.toFixed(6),
+        lng:       pos.coords.longitude.toFixed(6),
+        accuracy:  Math.round(pos.coords.accuracy),
+        timestamp: new Date().toLocaleString("en-IN", { timeZone:"Asia/Kolkata" })
+      };
+      result.innerHTML = `✅ ${bookGPS.lat}, ${bookGPS.lng} (±${bookGPS.accuracy}m)<br>
+        <a href="https://maps.google.com/?q=${bookGPS.lat},${bookGPS.lng}" target="_blank" style="color:var(--blue)">View on Maps →</a>`;
+    },
+    function() { result.textContent = "⚠️ Enable location permission and try again"; },
+    { enableHighAccuracy:true, timeout:8000 }
+  );
+}
+
+// ── Photo handler ──
+async function handleBookPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) { alert("Image files only"); input.value=""; return; }
+  if (file.size > 5*1024*1024) { alert("Under 5MB please"); input.value=""; return; }
+
+  document.getElementById("book-photo-label").textContent = "✓ " + file.name;
+  const statusEl  = document.getElementById("book-photo-status");
+  const preview   = document.getElementById("book-photo-preview");
+  const scanEl    = document.getElementById("book-ai-result");
+  const overrideEl= document.getElementById("book-override-section");
+
+  statusEl.textContent = "⏳ Scanning with AI...";
+  statusEl.style.color = "var(--warning)";
+  preview.style.display = "block";
+  scanEl.style.display  = "none";
+  overrideEl.style.display = "none";
+  bookPhotoValid  = false;
+  photoOverridden = false;
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const imgEl = document.getElementById("book-preview-img");
+    imgEl.src = e.target.result;
+
+    // Stamp GPS on accident photo
+    if (bookReason === "accident" && bookGPS) {
+      stampGPS(e.target.result, bookGPS, imgEl);
+    }
+
+    // AI scan
+    await runBookAIScan(e.target.result.split(",")[1], statusEl, scanEl, overrideEl);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── AI scan ──
+async function runBookAIScan(base64, statusEl, scanEl, overrideEl) {
+  const prompts = {
+    medical:  "Look at this image carefully. Does it appear to be a medical document, prescription, hospital letter, doctor message, medicine packaging, or any health-related photo? Reply VALID if it looks genuinely medical/health related. Reply INVALID if it's clearly something else like a selfie, food, scenery, or random object. Then in one sentence describe what you actually see.",
+    accident: "Look at this image carefully. Does it appear to show a road accident, vehicle damage, crash scene, police complaint document, or injury? Reply VALID if it looks accident-related. Reply INVALID if it's clearly unrelated. Then in one sentence describe what you see.",
+    family:   "Look at this image carefully. Does it appear to be any kind of document, handwritten note, message screenshot, or photo that could relate to a family emergency or crisis? Reply VALID if it could plausibly be emergency-related. Reply INVALID only if it's clearly a random photo like scenery or food. Then in one sentence describe what you see."
+  };
+
+  const prompt = prompts[bookReason] || prompts.family;
+
+  try {
+    const res  = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 120,
+        messages: [{ role: "user", content: [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+          { type: "text", text: prompt }
+        ]}]
+      })
+    });
+
+    const data  = await res.json();
+    const reply = data.content?.[0]?.text || "";
+
+    // Careful check — reply must start with VALID, not contain INVALID
+    const firstWord = reply.trim().split(/[\s\n]/)[0].toUpperCase();
+    bookPhotoValid  = firstWord === "VALID";
+
+    statusEl.textContent = bookPhotoValid
+      ? "✅ Photo verified by AI"
+      : "⚠️ AI flagged this photo — may not match emergency reason";
+    statusEl.style.color = bookPhotoValid ? "var(--accent)" : "var(--warning)";
+
+    scanEl.style.display  = "block";
+    scanEl.style.background = bookPhotoValid ? "rgba(0,229,176,.08)" : "rgba(255,165,2,.08)";
+    scanEl.style.borderColor= bookPhotoValid ? "rgba(0,229,176,.3)"  : "rgba(255,165,2,.3)";
+    scanEl.style.color      = bookPhotoValid ? "var(--accent)"        : "var(--warning)";
+    scanEl.textContent = "🤖 AI: " + reply;
+
+    // Show override option if invalid — for demo purposes
+    if (!bookPhotoValid) {
+      overrideEl.style.display = "block";
+    }
+
+  } catch {
+    // API unavailable — accept photo, show warning
+    bookPhotoValid  = true;
+    statusEl.textContent = "⚠️ AI scan unavailable — photo accepted";
+    statusEl.style.color = "var(--muted)";
+  }
+}
+
+function overrideAndProceed() {
+  photoOverridden = true;
+  bookPhotoValid  = true;
+  document.getElementById("book-override-section").style.display = "none";
+  document.getElementById("book-photo-status").textContent = "⚠️ Accepted with override (demo)";
+  document.getElementById("book-photo-status").style.color = "var(--warning)";
+}
+
+// ── GPS stamp on photo ──
+function stampGPS(imageSrc, gps, imgEl) {
+  const canvas = document.createElement("canvas");
+  const ctx    = canvas.getContext("2d");
+  const img    = new Image();
+  img.onload = function() {
+    canvas.width  = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    const sh = Math.max(60, img.height * 0.08);
+    const fs = Math.max(14, img.width * 0.022);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    ctx.fillRect(0, img.height - sh, img.width, sh);
+    ctx.fillStyle = "#00e5b0";
+    ctx.font = `bold ${fs}px monospace`;
+    ctx.fillText(`📍 ${gps.lat}, ${gps.lng}  ±${gps.accuracy}m`, 12, img.height - sh + fs + 6);
+    ctx.fillStyle = "#fff";
+    ctx.font = `${fs * 0.8}px monospace`;
+    ctx.fillText(`🕐 ${gps.timestamp} | Helping Hands Emergency`, 12, img.height - sh + fs * 2 + 10);
+    imgEl.src = canvas.toDataURL("image/jpeg", 0.92);
+  };
+  img.src = imageSrc;
+}
+
+// ── Confirm booking ──
+function confirmBooking() {
+  const name   = document.getElementById("pax-name").value.trim();
+  const age    = document.getElementById("pax-age").value.trim();
+  const gender = document.getElementById("pax-gender").value;
+  const phone  = document.getElementById("pax-phone").value.trim();
+  const cls    = document.getElementById("pax-class").value;
+  const fare   = document.getElementById("price-display").textContent;
+
+  if (!name)           { alert("Enter passenger name"); return; }
+  if (!age)            { alert("Enter age"); return; }
+  if (!gender)         { alert("Select gender"); return; }
+  if (phone.length<10) { alert("Enter valid 10-digit mobile number"); return; }
+  if (!otpVerified)    { alert("Verify Aadhaar OTP first"); return; }
+  if (!bookReason)     { alert("Select an emergency reason"); return; }
+
+  const photoFile = document.getElementById("book-photo-file");
+  if (!photoFile || photoFile.files.length === 0) {
+    alert("Proof photo is required"); return;
+  }
+
+  const pnr = Math.random().toString(36).substring(2,8).toUpperCase();
+
+  document.getElementById("pnr-number").textContent  = pnr;
+  document.getElementById("t-name").textContent       = `${name} (${age}, ${gender})`;
+  document.getElementById("t-transport").textContent  = `${tType} — ${tName}`;
+  document.getElementById("t-route").textContent      = `${tFrom} → ${tTo}`;
+  document.getElementById("t-time").textContent       = tTime;
+  document.getElementById("t-class").textContent      = cls;
+  document.getElementById("t-fare").textContent       = `${fare} (Demo)`;
+  document.getElementById("t-reason").textContent     = bookReason.charAt(0).toUpperCase() + bookReason.slice(1) + " Emergency";
+
+  // Add GPS row for accident
+  if (bookGPS) {
+    const row = document.createElement("div");
+    row.className = "ticket-row";
+    row.innerHTML = `<span class="ticket-key">Accident Location</span>
+      <span class="ticket-val" style="font-size:11px">
+        <a href="https://maps.google.com/?q=${bookGPS.lat},${bookGPS.lng}" target="_blank" style="color:var(--blue)">
+          📍 ${bookGPS.lat}, ${bookGPS.lng}
+        </a>
+      </span>`;
+    document.getElementById("ticket-card").appendChild(row);
+  }
+
+  if (photoOverridden) {
+    const row = document.createElement("div");
+    row.className = "ticket-row";
+    row.innerHTML = `<span class="ticket-key">Photo Status</span><span class="ticket-val" style="color:var(--warning);font-size:11px">⚠️ Demo override used</span>`;
+    document.getElementById("ticket-card").appendChild(row);
+  }
+
+  document.getElementById("booking-screen").style.display = "none";
+  document.getElementById("success-screen").style.display = "block";
+}
+
+function goBack() {
+  if (window.opener) window.close();
+  else if (document.referrer) window.location.href = document.referrer;
+  else window.location.href = "index.html";
+}
+</script>
+</body>
+</html>

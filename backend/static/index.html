@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helping Hands — Emergency Travel AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--surface:#121518;--surface2:#1a1e24;--border:#252b34;
+  --accent:#00e5b0;--danger:#ff4757;--warning:#ffa502;--purple:#5352ed;--blue:#00c2ff;
+  --text:#e8eaed;--muted:#6b7280;
+  --train:#5352ed;--bus:#2ed573;--cab:#ffa502;--flight:#00c2ff;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+.app{max-width:820px;margin:0 auto;padding:24px 16px 80px}
+
+.header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.logo{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.header-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.header-sub{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:2px}
+.live-dot{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent);font-family:'Space Mono',monospace}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+.panel-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+
+.input-row{display:grid;grid-template-columns:1fr 28px 1fr;gap:10px;align-items:center;margin-bottom:12px}
+.arrow{color:var(--accent);text-align:center;font-size:16px}
+.field{position:relative}
+.field-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 12px 11px 32px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+
+.em-row{display:flex;flex-direction:column;margin-bottom:12px;padding:12px;background:var(--surface2);border-radius:9px;border:1px solid var(--border);transition:border-color .2s}
+.em-row.active{border-color:var(--danger)}
+.em-top{display:flex;align-items:center;justify-content:space-between}
+.em-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.em-hint{font-size:10px;color:var(--muted);margin-top:5px;font-family:'Space Mono',monospace}
+.toggle{position:relative;width:46px;height:24px;cursor:pointer;flex-shrink:0}
+.toggle input{display:none}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:12px;transition:.2s}
+.toggle input:checked+.toggle-track{background:var(--danger)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{left:25px}
+
+#emergency-form{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+
+.reason-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.reason-btn{padding:10px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:.15s}
+.reason-btn:hover,.reason-btn.selected{border-color:var(--danger);color:var(--danger);background:rgba(255,71,87,.08)}
+
+#photo-section{display:none;margin-bottom:16px}
+.photo-upload-box{background:var(--surface2);border:1px dashed var(--border);border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s}
+.photo-upload-box:hover{border-color:var(--accent)}
+.choose-photo-btn{display:inline-block;padding:8px 18px;background:var(--surface);border:1px solid var(--accent);border-radius:8px;font-size:12px;font-weight:700;color:var(--accent);margin-top:6px}
+
+#gps-section{display:none;margin-top:12px;padding:12px;background:var(--surface2);border-radius:9px;border:1px solid var(--border)}
+
+.otp-row{display:flex;gap:8px;margin-bottom:10px}
+.otp-row input[type=text]{padding-left:14px}
+.btn-sm{padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;flex-shrink:0}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+.otp-display{font-family:'Space Mono',monospace;font-size:13px;color:var(--accent);margin-bottom:10px;padding:8px 12px;background:rgba(0,229,176,.08);border-radius:7px;display:none}
+.verified-badge{display:none;font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:10px}
+
+.btn-main{width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:4px}
+.btn-main:active{transform:scale(.98);opacity:.9}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+
+.demo-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.demo-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.demo-hdr-title{font-size:11px;font-family:'Space Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.demo-badge{background:var(--purple);color:#fff;font-size:9px;padding:2px 7px;border-radius:20px;font-family:'Space Mono',monospace}
+.demo-chevron{margin-left:auto;color:var(--muted);transition:transform .2s;font-size:12px}
+.demo-chevron.open{transform:rotate(180deg)}
+.demo-body{margin-top:14px}
+.demo-desc{font-size:11px;color:var(--muted);margin-bottom:10px;font-family:'Space Mono',monospace}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.demo-btn{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--text);text-align:left;transition:.15s;line-height:1.4}
+.demo-btn:hover{border-color:var(--accent)}
+.demo-btn.active{border-color:var(--accent);background:rgba(0,229,176,.07)}
+.demo-btn small{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:2px}
+.demo-btn.e-tracking{border-left:3px solid var(--accent)}
+.demo-btn.e-midnight{border-left:3px solid var(--purple)}
+.demo-btn.e-blocked{border-left:3px solid var(--warning)}
+.demo-btn.e-noroutes{border-left:3px solid var(--muted)}
+.demo-btn.e-sim{border-left:3px solid var(--blue)}
+
+.filter-row{display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fbtn{padding:6px 13px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.fbtn[data-t=All].active{background:var(--text);border-color:var(--text);color:#000}
+.fbtn[data-t=Train].active{background:var(--train);border-color:var(--train);color:#fff}
+.fbtn[data-t=Bus].active{background:var(--bus);border-color:var(--bus);color:#000}
+.fbtn[data-t=Flight].active{background:var(--flight);border-color:var(--flight);color:#000}
+.fbtn[data-t=Cab].active{background:var(--cab);border-color:var(--cab);color:#000}
+
+#result{display:none}
+.alert{border-radius:10px;padding:13px 15px;margin-bottom:12px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px}
+.alert.em{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.4);color:var(--danger)}
+.alert.warn{background:rgba(255,165,2,.08);border:1px solid rgba(255,165,2,.3);color:var(--warning)}
+.alert.info{background:rgba(83,82,237,.1);border:1px solid rgba(83,82,237,.4);color:#a8a7ff}
+
+.best-card{background:linear-gradient(135deg,rgba(0,229,176,.08),rgba(83,82,237,.08));border:1px solid rgba(0,229,176,.2);border-radius:12px;padding:16px;margin-bottom:12px}
+.best-lbl{font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.best-txt{font-size:17px;font-weight:800;line-height:1.3}
+.best-sub{font-size:12px;color:var(--muted);margin-top:5px}
+.conf-wrap{margin-top:10px}
+.conf-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.conf-track{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .6s}
+
+.track-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.track-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);flex-shrink:0}
+.track-lbl{font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.track-stops{font-size:14px;font-weight:700;margin-top:2px}
+.track-eta{font-size:11px;color:var(--muted);margin-top:2px}
+
+.sim-card{background:rgba(0,194,255,.07);border:1px solid rgba(0,194,255,.3);border-radius:10px;padding:12px;margin-bottom:12px}
+
+.sec-title{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 9px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px}
+.rcard.best{border-color:rgba(0,229,176,.3)}
+.rcard.indirect{border-left:3px solid var(--purple)}
+.rcard-hdr{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.tbadge{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;font-family:'Space Mono',monospace}
+.tbadge.Train{background:rgba(83,82,237,.2);color:#a8a7ff}
+.tbadge.Bus{background:rgba(46,213,115,.2);color:#2ed573}
+.tbadge.Cab{background:rgba(255,165,2,.2);color:#ffa502}
+.tbadge.Flight{background:rgba(0,194,255,.2);color:#00c2ff}
+.rname{font-size:14px;font-weight:700}
+.rnum{font-size:11px;color:var(--muted)}
+.best-star{margin-left:auto;font-size:11px;color:var(--accent);font-family:'Space Mono',monospace}
+.rmeta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.ml{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace}
+.mv{font-size:13px;font-weight:600;margin-top:2px}
+.mv.g{color:var(--accent)}.mv.o{color:var(--warning)}
+.rfoot{display:flex;align-items:center;justify-content:space-between;padding-top:9px;border-top:1px solid var(--border)}
+.spill{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.spill.Available{background:rgba(0,229,176,.12);color:var(--accent)}
+.spill.FillingFast{background:rgba(255,165,2,.12);color:var(--warning)}
+.spill.WaitingList{background:rgba(255,71,87,.12);color:var(--danger)}
+.advice-t{font-size:11px;color:var(--muted);margin-left:8px}
+.price-t{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace}
+.airport-info{font-size:11px;color:var(--blue);margin-bottom:8px;font-family:'Space Mono',monospace}
+.live-row{font-size:11px;color:var(--muted);margin-top:7px}
+.book-btn{margin-top:9px;width:100%;padding:9px;border:1px solid var(--accent);border-radius:8px;background:rgba(0,229,176,.06);color:var(--accent);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.book-btn:hover{background:rgba(0,229,176,.14)}
+
+.isteps{display:flex;flex-direction:column;gap:7px}
+.istep{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.istep-hdr{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.step-n{width:18px;height:18px;border-radius:50%;background:var(--purple);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.istep-meta{display:flex;gap:12px;font-size:12px;color:var(--muted)}
+
+.next-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.ncard{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px}
+.ntype{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted)}
+.nname{font-size:13px;font-weight:700;margin:3px 0}
+.ntime{font-size:12px;color:var(--accent)}
+.nprice{font-size:11px;color:var(--muted);margin-top:2px}
+
+.err-card{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.3);border-radius:10px;padding:16px;text-align:center;color:var(--danger)}
+.err-icon{font-size:28px;margin-bottom:7px}
+.err-msg{font-size:14px;font-weight:600}
+
+.spinner{width:16px;height:16px;border:2px solid rgba(0,229,176,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-btn{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.8;transform:scale(1.05)}}
+
+@media(max-width:500px){
+  .input-row{grid-template-columns:1fr}.arrow{display:none}
+  .demo-grid{grid-template-columns:1fr}.rmeta{grid-template-columns:1fr 1fr}
+  .next-grid{grid-template-columns:1fr}.reason-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">🤝</div>
+    <div>
+      <div class="header-title">Helping Hands</div>
+      <div class="header-sub">Emergency Travel</div>
+    </div>
+    <div class="live-dot"><div class="dot"></div>LIVE</div>
+  </div>
+
+  <!-- SEARCH PANEL -->
+  <div class="panel">
+    <div class="panel-label">Where are you going?</div>
+
+    <div class="input-row">
+      <div class="field">
+        <span class="field-icon">📍</span>
+        <input type="text" id="source" placeholder="From city">
+      </div>
+      <div class="arrow">→</div>
+      <div class="field">
+        <span class="field-icon">🎯</span>
+        <input type="text" id="destination" placeholder="To city">
+      </div>
+    </div>
+
+    <!-- EMERGENCY TOGGLE -->
+    <div class="em-row" id="em-row">
+      <div class="em-top">
+        <div class="em-label">
+          🚨 Emergency Mode
+          <span id="em-status" style="font-size:11px;font-weight:400;color:var(--muted)">OFF</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="em-toggle" onchange="toggleEmergency()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="em-hint">💡 Enable only when time-critical — requires Aadhaar + photo proof</div>
+    </div>
+
+    <!-- EMERGENCY FORM -->
+    <div id="emergency-form">
+
+      <!-- STEP 1: REASON -->
+      <div class="panel-label">Step 1 — Emergency Reason</div>
+      <div class="reason-grid">
+        <button class="reason-btn" onclick="selectReason('medical',this)">🏥 Medical</button>
+        <button class="reason-btn" onclick="selectReason('accident',this)">🚗 Accident</button>
+        <button class="reason-btn" onclick="selectReason('family',this)">👨‍👩‍👧 Family Crisis</button>
+      </div>
+
+      <!-- STEP 2: PHOTO (shown after reason selected) -->
+      <div id="photo-section">
+        <div class="panel-label">
+          Step 2 — Proof Photo
+          <span style="color:var(--danger);font-size:9px;font-weight:800"> *REQUIRED</span>
+        </div>
+        <div id="photo-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
+
+        <div class="photo-upload-box" onclick="document.getElementById('em-photo-file').click()">
+          <div style="font-size:24px;margin-bottom:6px">📸</div>
+          <div style="font-size:12px;color:var(--muted)" id="em-photo-label">Tap to upload proof photo</div>
+          <div class="choose-photo-btn">Choose Photo</div>
+          <input type="file" id="em-photo-file" accept="image/*" style="display:none" onchange="handleEmPhoto(this)">
+        </div>
+
+        <div id="em-photo-preview" style="margin-top:10px;display:none">
+          <img id="em-preview-img" style="width:100%;border-radius:9px;border:1px solid var(--border);max-height:200px;object-fit:cover">
+          <div id="em-photo-status" style="font-size:11px;margin-top:6px"></div>
+        </div>
+
+        <div id="ai-scan-result" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:12px;border:1px solid"></div>
+
+        <!-- GPS — accident only -->
+        <div id="gps-section">
+          <div class="panel-label" style="margin-top:14px">📍 Accident Location Pin</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Pin your exact location — this gets stamped on the photo</div>
+          <button class="btn-sm" onclick="captureGPS()" style="width:100%;text-align:center">
+            📍 Capture My Current Location
+          </button>
+          <div id="gps-result" style="display:none;margin-top:8px;padding:9px;background:rgba(0,229,176,.08);border-radius:7px;font-size:11px"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3: AADHAAR -->
+      <div class="panel-label" style="margin-top:16px">Step 3 — Aadhaar Verification</div>
+      <div class="field" style="margin-bottom:10px">
+        <span class="field-icon">🪪</span>
+        <input type="text" id="aadhaar-input" placeholder="12-digit Aadhaar number" maxlength="12">
+      </div>
+      <div class="otp-row">
+        <input type="text" id="otp-input" placeholder="Enter OTP" maxlength="6" style="padding-left:14px;flex:1">
+        <button class="btn-sm" onclick="requestOTP()">Send OTP</button>
+        <button class="btn-sm" onclick="verifyOTP()">Verify</button>
+      </div>
+      <div class="otp-display" id="otp-display"></div>
+      <div class="verified-badge" id="verified-badge">✅ Aadhaar verified</div>
+
+    </div>
+
+    <button class="btn-main" id="search-btn" onclick="searchTransport()">
+      Find Best Route
+    </button>
+  </div>
+
+  <!-- DEMO PANEL -->
+  <div class="demo-panel">
+    <div class="demo-hdr" onclick="toggleDemo()">
+      <div class="demo-hdr-title">🎬 Demo Scenarios</div>
+      <div class="demo-badge">Presentation</div>
+      <div class="demo-chevron open" id="demo-chevron">▼</div>
+    </div>
+    <div class="demo-body" id="demo-body">
+      <div class="demo-desc">Click any scenario to simulate the system's intelligence layers:</div>
+      <div class="demo-grid">
+        <button class="demo-btn e-tracking" data-s="tracking" onclick="runDemo('tracking')">
+          📍 Live Tracking
+          <small>Real-time stop-by-stop simulation</small>
+        </button>
+        <button class="demo-btn e-midnight" data-s="midnight" onclick="runDemo('midnight')">
+          🌙 Midnight Mode
+          <small>Smart routes after 10:30 PM</small>
+        </button>
+        <button class="demo-btn e-sim" data-s="sim_tracking" onclick="runDemo('sim_tracking')">
+          📡 SIM Tracking + SOS
+          <small>Passenger in danger — location sharing</small>
+        </button>
+        <button class="demo-btn e-noroutes" data-s="no_routes" onclick="runDemo('no_routes')">
+          🚫 No Routes
+          <small>Fallback + next available suggestions</small>
+        </button>
+        <button class="demo-btn e-blocked" data-s="blocked" onclick="runDemo('blocked')">
+          ⚠️ Abuse Block
+          <small>Strike system + anti-spam triggered</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-row" id="filter-row">
+    <button class="fbtn active" data-t="All"    onclick="setFilter('All')">All</button>
+    <button class="fbtn"        data-t="Train"  onclick="setFilter('Train')">🚆 Train</button>
+    <button class="fbtn"        data-t="Bus"    onclick="setFilter('Bus')">🚌 Bus</button>
+    <button class="fbtn"        data-t="Flight" onclick="setFilter('Flight')">✈️ Flight</button>
+    <button class="fbtn"        data-t="Cab"    onclick="setFilter('Cab')">🚕 Cab</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="result"></div>
+
+</div>
+
+<script>
+const API       = "http://localhost:8000";
+let lastData    = null;
+let activeFilter= "All";
+let isEmergency = false;
+let otpVerified = false;
+let selectedReason = "";
+let emGPS       = null;
+let demoOpen    = true;
+
+// ── Emergency toggle ──
+function toggleEmergency() {
+  isEmergency = document.getElementById("em-toggle").checked;
+  const statusEl = document.getElementById("em-status");
+  statusEl.textContent = isEmergency ? "ON" : "OFF";
+  statusEl.style.color = isEmergency ? "var(--danger)" : "var(--muted)";
+  document.getElementById("em-row").classList.toggle("active", isEmergency);
+  document.getElementById("emergency-form").style.display = isEmergency ? "block" : "none";
+  if (!isEmergency) {
+    otpVerified = false; selectedReason = ""; emGPS = null;
+    document.getElementById("verified-badge").style.display = "none";
+    document.getElementById("otp-display").style.display = "none";
+    document.getElementById("photo-section").style.display = "none";
+    document.getElementById("em-photo-preview").style.display = "none";
+    document.getElementById("ai-scan-result").style.display = "none";
+    document.getElementById("gps-result").style.display = "none";
+    document.querySelectorAll(".reason-btn").forEach(b => b.classList.remove("selected"));
+    window.photoValid = false;
+  }
+}
+
+// ── Reason selection ──
+function selectReason(reason, btn) {
+  selectedReason = reason;
+  document.querySelectorAll(".reason-btn").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  document.getElementById("photo-section").style.display = "block";
+
+  const hints = {
+    medical:  "📋 Upload hospital letter, prescription, or doctor message screenshot",
+    accident: "📸 Upload a photo of the accident scene or police complaint",
+    family:   "📄 Upload any document or message showing the family emergency"
+  };
+  document.getElementById("photo-hint").textContent = hints[reason] || "";
+
+  // GPS only for accident
+  document.getElementById("gps-section").style.display = reason === "accident" ? "block" : "none";
+
+  // Reset photo state
+  document.getElementById("em-photo-preview").style.display = "none";
+  document.getElementById("ai-scan-result").style.display = "none";
+  document.getElementById("em-photo-label").textContent = "Tap to upload proof photo";
+  window.photoValid = false;
+}
+
+// ── GPS capture ──
+function captureGPS() {
+  const result = document.getElementById("gps-result");
+  result.style.display = "block";
+  result.innerHTML = "⏳ Getting your location...";
+  result.style.color = "var(--warning)";
+  if (!navigator.geolocation) {
+    result.innerHTML = "⚠️ GPS not supported on this device"; return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      emGPS = {
+        lat: pos.coords.latitude.toFixed(6),
+        lng: pos.coords.longitude.toFixed(6),
+        accuracy: Math.round(pos.coords.accuracy),
+        timestamp: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      };
+      result.style.color = "var(--accent)";
+      result.innerHTML = `✅ Location captured: ${emGPS.lat}, ${emGPS.lng} (±${emGPS.accuracy}m)<br>
+        🕐 ${emGPS.timestamp}<br>
+        <a href="https://maps.google.com/?q=${emGPS.lat},${emGPS.lng}" target="_blank" style="color:var(--blue)">View on Google Maps →</a>`;
+    },
+    function() {
+      result.style.color = "var(--warning)";
+      result.innerHTML = "⚠️ Could not get GPS. Enable location permission and try again.";
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+// ── Photo handler ──
+async function handleEmPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) { alert("Image files only"); input.value=""; return; }
+  if (file.size > 5*1024*1024) { alert("Under 5MB please"); input.value=""; return; }
+
+  document.getElementById("em-photo-label").textContent = "✓ " + file.name;
+  const status  = document.getElementById("em-photo-status");
+  const preview = document.getElementById("em-photo-preview");
+  const scanEl  = document.getElementById("ai-scan-result");
+
+  status.textContent = "⏳ Scanning photo with AI...";
+  status.style.color = "var(--warning)";
+  preview.style.display = "block";
+  scanEl.style.display = "none";
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const imgEl = document.getElementById("em-preview-img");
+    imgEl.src = e.target.result;
+
+    // Stamp GPS on accident photo if GPS captured
+    if (selectedReason === "accident" && emGPS) {
+      stampGPS(e.target.result, emGPS, imgEl);
+    }
+
+    // AI scan
+    await runAIScan(e.target.result.split(",")[1], selectedReason, status, scanEl);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── AI scan via Claude API ──
+async function runAIScan(base64, reason, statusEl, scanEl) {
+  const prompts = {
+    medical:  "Look at this image. Does it appear to be a medical document, prescription, hospital letter, or health-related photo? Reply VALID if it looks medical, INVALID if clearly unrelated. Then one sentence explaining what you see.",
+    accident: "Look at this image. Does it appear to show an accident scene, vehicle damage, road incident, or police complaint? Reply VALID if accident-related, INVALID if clearly unrelated. Then one sentence.",
+    family:   "Look at this image. Does it appear to be a document, letter, message screenshot, or photo related to a personal emergency? Reply VALID if it could be emergency-related, INVALID if clearly a random photo. Then one sentence."
+  };
+  try {
+    const res  = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 100,
+        messages: [{ role: "user", content: [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+          { type: "text", text: prompts[reason] || prompts.family }
+        ]}]
+      })
+    });
+    const data  = await res.json();
+    const reply = data.content?.[0]?.text || "";
+    const valid = reply.toUpperCase().includes("VALID") && !reply.toUpperCase().startsWith("INVALID");
+    window.photoValid = valid;
+    statusEl.textContent = valid ? "✅ Photo verified by AI" : "⚠️ Photo may not match emergency reason";
+    statusEl.style.color = valid ? "var(--accent)" : "var(--warning)";
+    scanEl.style.display = "block";
+    scanEl.style.background = valid ? "rgba(0,229,176,.08)" : "rgba(255,165,2,.08)";
+    scanEl.style.borderColor = valid ? "rgba(0,229,176,.3)" : "rgba(255,165,2,.3)";
+    scanEl.style.color = valid ? "var(--accent)" : "var(--warning)";
+    scanEl.textContent = "🤖 AI: " + reply;
+  } catch {
+    window.photoValid = true;
+    statusEl.textContent = "⚠️ AI scan unavailable — photo accepted";
+    statusEl.style.color = "var(--muted)";
+  }
+}
+
+// ── GPS stamp on photo ──
+function stampGPS(imageSrc, gps, imgEl) {
+  const canvas = document.createElement("canvas");
+  const ctx    = canvas.getContext("2d");
+  const img    = new Image();
+  img.onload = function() {
+    canvas.width = img.width; canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    const sh = Math.max(60, img.height * 0.08);
+    const fs = Math.max(14, img.width * 0.022);
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    ctx.fillRect(0, img.height - sh, img.width, sh);
+    ctx.fillStyle = "#00e5b0"; ctx.font = `bold ${fs}px monospace`;
+    ctx.fillText(`📍 ${gps.lat}, ${gps.lng}  ±${gps.accuracy}m`, 12, img.height - sh + fs + 6);
+    ctx.fillStyle = "#fff"; ctx.font = `${fs*.8}px monospace`;
+    ctx.fillText(`🕐 ${gps.timestamp} | Helping Hands Emergency`, 12, img.height - sh + fs*2 + 10);
+    imgEl.src = canvas.toDataURL("image/jpeg", 0.92);
+  };
+  img.src = imageSrc;
+}
+
+// ── OTP ──
+async function requestOTP() {
+  const aadhaar = document.getElementById("aadhaar-input").value.trim();
+  if (aadhaar.length !== 12 || isNaN(aadhaar)) { alert("Enter valid 12-digit Aadhaar"); return; }
+  try {
+    const res  = await fetch(`${API}/request-otp?aadhaar=${aadhaar}`, { method:"POST" });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    const d = document.getElementById("otp-display");
+    d.textContent = `🔐 Your OTP: ${data.otp}  (expires in 5 min)`;
+    d.style.display = "block";
+  } catch { alert("Could not reach server"); }
+}
+
+async function verifyOTP() {
+  const aadhaar = document.getElementById("aadhaar-input").value.trim();
+  const otp     = document.getElementById("otp-input").value.trim();
+  if (!aadhaar || !otp) { alert("Enter Aadhaar and OTP"); return; }
+  try {
+    const res  = await fetch(`${API}/verify-otp?aadhaar=${aadhaar}&otp=${otp}`, { method:"POST" });
+    const data = await res.json();
+    if (data.verified) {
+      otpVerified = true;
+      document.getElementById("verified-badge").style.display = "block";
+      document.getElementById("otp-display").style.display = "none";
+    } else { alert(data.error || "OTP verification failed"); }
+  } catch { alert("Could not reach server"); }
+}
+
+// ── Demo ──
+function toggleDemo() {
+  demoOpen = !demoOpen;
+  document.getElementById("demo-body").style.display = demoOpen ? "block" : "none";
+  document.getElementById("demo-chevron").classList.toggle("open", demoOpen);
+}
+function runDemo(scenario) {
+  document.querySelectorAll(".demo-btn").forEach(b => b.classList.toggle("active", b.dataset.s === scenario));
+  searchTransport(scenario);
+}
+
+// ── Filter ──
+function setFilter(t) {
+  activeFilter = t;
+  document.querySelectorAll(".fbtn").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+  if (lastData) renderResults(lastData);
+}
+
+// ── SOS ──
+function triggerSOS() {
+  const confirmed = confirm("🆘 SOS ACTIVATED\n\nThis will:\n• Share your live location with police\n• Call your emergency contacts\n• Send your last known address\n\nConfirm?");
+  if (confirmed) alert("✅ SOS Sent!\n\n📍 Location shared with police\n📞 Emergency contacts notified\n🚔 Help is on the way");
+}
+
+// ── Main search ──
+async function searchTransport(demoMode = "") {
+  const source = document.getElementById("source").value.trim();
+  const dest   = document.getElementById("destination").value.trim();
+  if (!source || !dest) { showErr("Please enter source and destination."); return; }
+
+  if (isEmergency && !demoMode) {
+    if (!selectedReason) { showErr("Please select an emergency reason."); return; }
+    const photoFile = document.getElementById("em-photo-file");
+    if (!photoFile || photoFile.files.length === 0) { showErr("Photo proof is required for emergency mode."); return; }
+    if (!otpVerified) { showErr("Please verify your Aadhaar OTP first."); return; }
+  }
+
+  const btn = document.getElementById("search-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Searching...';
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("filter-row").style.display = "none";
+
+  const aadhaar  = document.getElementById("aadhaar-input").value.trim() || "000000000000";
+  const hasPhoto = isEmergency && document.getElementById("em-photo-file")?.files.length > 0;
+
+  const p = new URLSearchParams({
+    source, destination: dest,
+    emergency: isEmergency && !demoMode,
+    emergency_reason: selectedReason || "none",
+    aadhaar: isEmergency && !demoMode ? aadhaar : "000000000000",
+    otp_verified: isEmergency && !demoMode ? otpVerified : false,
+    has_photo: hasPhoto,
+    user_id: "demo_" + Date.now(),
+    demo: demoMode || ""
+  });
+
+  try {
+    const res  = await fetch(`${API}/search?${p}`, { signal: AbortSignal.timeout(7000) });
+    const data = await res.json();
+    lastData = data;
+    renderResults(data);
+    document.getElementById("filter-row").style.display = "flex";
+  } catch {
+    showErr("Cannot reach server. Make sure backend is running on port 8000.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Find Best Route";
+  }
+}
+
+// ── Render results ──
+function renderResults(data) {
+  const box = document.getElementById("result");
+  box.style.display = "block";
+  let h = "";
+
+  if (data.error) {
+    box.innerHTML = `<div class="err-card"><div class="err-icon">🚫</div><div class="err-msg">${x(data.error)}</div></div>`;
+    return;
+  }
+
+  // SIM TRACKING — standalone UI, no transport shown
+  if (data.sim_tracking && !data.police_alert) {
+    h = `<div style="background:rgba(0,194,255,.07);border:1px solid rgba(0,194,255,.4);border-radius:14px;padding:20px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--blue);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">📡 SIM Tracking Active</div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px">Passenger location is being monitored</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Use SOS if you are in danger or need immediate help</div>
+      ${data.tracking?.current_stop ? `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);border-radius:10px;margin-bottom:12px">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue);flex-shrink:0"></div>
+          <div>
+            <div style="font-size:10px;color:var(--blue);font-family:'Space Mono',monospace">CURRENT LOCATION</div>
+            <div style="font-size:14px;font-weight:700;margin-top:2px">${x(data.tracking.current_stop)} → ${x(data.tracking.next_stop)}</div>
+            ${data.tracking.eta_minutes ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">ETA: ${data.tracking.eta_minutes} min</div>` : ""}
+          </div>
+        </div>` : ""}
+      <button onclick="triggerSOS()" style="width:100%;padding:16px;background:var(--danger);border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.5px;animation:pulse-btn 1.5s infinite">
+        🆘 PRESS SOS — SEND HELP
+      </button>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Sends your live location to police and emergency contacts</div>
+    </div>`;
+    box.innerHTML = h;
+    return;
+  }
+
+  // EMERGENCY POLICE ALERT
+  if (data.police_alert || data.safety_mode) {
+    h += `<div class="alert em">🚔 ${x(data.police_alert || "Emergency mode active")}</div>`;
+    if (data.sim_tracking) {
+      h += `<div class="sim-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--blue)">📡 SIM Tracking Ready</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Press SOS if you are in danger</div>
+          </div>
+          <button onclick="triggerSOS()" style="background:var(--danger);border:none;border-radius:8px;padding:10px 18px;color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;animation:pulse-btn 1.5s infinite">
+            🆘 SOS
+          </button>
+        </div>
+      </div>`;
+    }
+  }
+
+  // MIDNIGHT
+  if (data.midnight_mode)
+    h += `<div class="alert info">🌙 Midnight mode — limited services after 10:30 PM</div>`;
+
+  // URGENCY LABEL
+  if (data.urgency_label) {
+    const col = {CRITICAL:"var(--danger)",URGENT:"var(--warning)",MODERATE:"var(--accent)"}[data.urgency_label] || "var(--accent)";
+    h += `<div style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:800;font-family:'Space Mono',monospace;background:${col}22;border:1px solid ${col};color:${col};margin-bottom:12px;letter-spacing:1px">${data.urgency_label}</div>`;
+  }
+
+  // EMERGENCY MESSAGE
+  if (data.emergency_message)
+    h += `<div style="background:rgba(255,71,87,.15);border:1px solid var(--danger);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px">🚨</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--danger)">${x(data.emergency_message)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Every minute matters — act now</div>
+      </div>
+    </div>`;
+
+  // ACTION STEPS
+  if (data.action_steps?.length) {
+    h += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">What to do right now</div>
+      ${data.action_steps.map(step => `
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:var(--text)">
+          <span style="color:var(--accent);font-weight:700;flex-shrink:0">${step.split(".")[0]}.</span>
+          <span>${x(step.split(".").slice(1).join(".").trim())}</span>
+        </div>`).join("")}
+    </div>`;
+  }
+
+  // BACKUP ROUTE
+  if (data.backup_route?.steps?.[0]) {
+    const b = data.backup_route.steps[0];
+    const icons = {Train:"🚆",Bus:"🚌",Cab:"🚕",Flight:"✈️"};
+    h += `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warning);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--warning);font-family:'Space Mono',monospace;margin-bottom:8px">BACKUP OPTION</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">${icons[b.type]||"🚗"}</span>
+        <div>
+          <div style="font-size:14px;font-weight:700">${x(b.name)}</div>
+          <div style="font-size:12px;color:var(--muted)">${x(b.time)} · ${x(b.booking_status)} · ${x(b.price_range||"")}</div>
+        </div>
+      </div>
+      ${b.booking_link ? `<button class="book-btn" style="border-color:var(--warning);color:var(--warning);background:rgba(255,165,2,.06)"
+        onclick="window.open('booking.html?name=${encodeURIComponent(b.name)}&type=${encodeURIComponent(b.type)}&time=${encodeURIComponent(b.time)}&from=${encodeURIComponent(document.getElementById('source').value)}&to=${encodeURIComponent(document.getElementById('destination').value)}&price=${encodeURIComponent(b.price_range||'₹450')}&platform=${encodeURIComponent(b.platform||'')}','_blank')">Book Backup →</button>` : ""}
+    </div>`;
+  }
+
+  // BEST ACTION CARD
+  const showReason = data.reason
+    && !data.police_alert && !data.safety_mode && !data.midnight_mode
+    && !data.emergency_message && !data.best_action?.includes("No transport")
+    && !data.best_action?.includes("🌙");
+
+  if (data.best_action) {
+    const conf     = data.confidence;
+    const showConf = conf != null && (data.routes?.length > 0 || data.indirect_routes?.length > 0);
+    h += `<div class="best-card">
+      <div class="best-lbl">Best Action Right Now</div>
+      <div class="best-txt">${x(data.best_action)}</div>
+      ${showReason ? `<div class="best-sub">💡 ${x(data.reason)}</div>` : ""}
+      ${data.indirect_note ? `<div class="best-sub" style="color:var(--purple)">🔄 ${x(data.indirect_note)}</div>` : ""}
+      ${showConf ? `<div class="conf-wrap">
+        <div class="conf-labels"><span>Confidence</span><span>${Math.round(conf*100)}%</span></div>
+        <div class="conf-track"><div class="conf-fill" style="width:${Math.round(conf*100)}%"></div></div>
+      </div>` : ""}
+    </div>`;
+  }
+
+  // BOOKING WARNINGS
+  if (data.booking_warning)
+    h += `<div class="alert warn">⚠️ ${x(data.booking_warning)}</div>`;
+  if (data.tatkal_suggestion)
+    h += `<div class="alert info">💡 ${x(data.tatkal_suggestion)}</div>`;
+
+  // LIVE TRACKING
+  if (data.tracking?.current_stop
+      && data.tracking.eta_minutes > 0
+      && data.tracking.eta_minutes < 180
+      && !data.sim_tracking) {
+    const eta = data.tracking.eta_minutes;
+    h += `<div class="track-card">
+      <div class="track-dot"></div>
+      <div>
+        <div class="track-lbl">📍 Live Tracking</div>
+        <div class="track-stops">${x(data.tracking.current_stop)} → ${x(data.tracking.next_stop)}</div>
+        <div class="track-eta">ETA: ${eta < 60 ? eta+" min" : Math.round(eta/60)+"h "+(eta%60)+"m"}</div>
+      </div>
+    </div>`;
+  }
+
+  // DIRECT ROUTES
+  const direct = filterRoutes(data.routes || []);
+  if (direct.length) {
+    h += `<div class="sec-title">Direct Routes</div>`;
+    direct.forEach((r, i) => h += routeCard(r, i === 0));
+  }
+
+  // INDIRECT ROUTES
+  const indirect = data.indirect_routes || [];
+  if (indirect.length) {
+    h += `<div class="sec-title">${direct.length === 0 ? "🔄 Best Connecting Routes" : "Connecting Routes"}</div>`;
+    indirect.forEach(r => h += indirectCard(r));
+  }
+
+  // NO ROUTES FALLBACK
+  if (!direct.length && !indirect.length) {
+    h += `<div class="alert warn">⏳ ${x(data.fallback || "No routes found right now.")}</div>`;
+    if (data.cab_suggestion?.show) {
+      h += `<div style="background:rgba(255,165,2,.08);border:1px solid rgba(255,165,2,.3);border-radius:12px;padding:16px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:var(--warning);margin-bottom:6px">🚕 Emergency Cab Option</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${x(data.cab_suggestion.message)}</div>
+        <button class="book-btn" style="border-color:var(--warning);color:var(--warning);background:rgba(255,165,2,.06)"
+          onclick="window.open('${data.cab_suggestion.booking_link}','_blank')">Book Cab Now →</button>
+      </div>`;
+    }
+    if (data.next_available?.length) {
+      h += `<div class="sec-title">Next Available Services</div><div class="next-grid">`;
+      data.next_available.forEach(n => {
+        h += `<div class="ncard">
+          <div class="ntype">${x(n.type)}</div>
+          <div class="nname">${x(n.name)}</div>
+          <div class="ntime">${x(n.time)}${n.minutes_away ? ` (~${n.minutes_away}m)` : ""}</div>
+          ${n.price_range ? `<div class="nprice">${x(n.price_range)}</div>` : ""}
+          <button class="book-btn" onclick="window.open('${n.booking_link}','_blank')">Book →</button>
+        </div>`;
+      });
+      h += `</div>`;
+    }
+  }
+
+  box.innerHTML = h;
+}
+
+// ── Route cards ──
+function routeCard(route, isBest) {
+  const s = route.steps?.[0];
+  if (!s) return "";
+  const icons  = {Train:"🚆",Bus:"🚌",Cab:"🚕",Flight:"✈️"};
+  const urgStr = s.urgency<0 ? "Departed" : s.urgency<60 ? s.urgency+" min" : s.urgency<9999 ? Math.round(s.urgency/60)+"h "+(s.urgency%60)+"m" : "Anytime";
+  const col    = s.urgency<60 ? "o" : s.urgency<180 ? "g" : "";
+  const sc     = (s.booking_status||"").replace(/\s+/g,"");
+  const src    = document.getElementById("source").value;
+  const dst    = document.getElementById("destination").value;
+  return `<div class="rcard ${isBest?"best":""}">
+    <div class="rcard-hdr">
+      <div class="tbadge ${s.type}">${icons[s.type]||"🚗"} ${s.type}</div>
+      <div><div class="rname">${x(s.name)}</div>${s.number?`<div class="rnum">#${x(s.number)}</div>`:""}</div>
+      ${isBest?`<div class="best-star">★ BEST</div>`:""}
+    </div>
+    ${s.type==="Flight"&&s.airport_info?`<div class="airport-info">✈️ ${x(s.airport_info)}</div>`:""}
+    <div class="rmeta">
+      <div><div class="ml">Departs</div><div class="mv ${col}">${x(s.time)}</div></div>
+      <div><div class="ml">In</div><div class="mv ${col}">${urgStr}</div></div>
+      <div><div class="ml">Duration</div><div class="mv">${Math.round(s.duration/60)}h ${s.duration%60}m</div></div>
+    </div>
+    <div class="rfoot">
+      <div><span class="spill ${sc}">${x(s.booking_status)}</span><span class="advice-t">💡 ${x(s.advice||"")}</span></div>
+      ${s.price_range?`<div class="price-t">${x(s.price_range)}</div>`:""}
+    </div>
+    ${s.live_status?`<div class="live-row">🔴 ${x(s.live_status)} · ${x(s.delay_prediction||"")}${s.next_stop?" · Next: "+x(s.next_stop):""}</div>`:""}
+    ${s.booking_link?`<button class="book-btn" onclick="window.open('booking.html?name=${encodeURIComponent(s.name)}&type=${encodeURIComponent(s.type)}&time=${encodeURIComponent(s.time)}&from=${encodeURIComponent(src)}&to=${encodeURIComponent(dst)}&price=${encodeURIComponent(s.price_range||'₹450')}&platform=${encodeURIComponent(s.platform||'')}&reason=${encodeURIComponent(selectedReason)}','_blank')">Book on ${x(s.platform||"Platform")} →</button>`:""}
+  </div>`;
+}
+
+function indirectCard(r) {
+  const steps = r.steps||[];
+  if (steps.length<2) return "";
+  const icons = {Train:"🚆",Bus:"🚌",Cab:"🚕",Flight:"✈️"};
+  const src   = document.getElementById("source").value;
+  const dst   = document.getElementById("destination").value;
+  return `<div class="rcard indirect">
+    <div style="font-size:11px;color:var(--purple);font-family:'Space Mono',monospace;margin-bottom:10px">🔄 Connect via ${x(r.via||"Mid-city")}</div>
+    <div class="isteps">
+      ${steps.map((s,i)=>`<div class="istep">
+        <div class="istep-hdr">
+          <div class="step-n">${i+1}</div>
+          <div class="tbadge ${s.type}" style="font-size:10px">${icons[s.type]||"🚗"} ${s.type}</div>
+          <div style="font-size:13px;font-weight:700">${x(s.name)}</div>
+        </div>
+        <div class="istep-meta">
+          <span>🕐 ${x(s.time)}</span>
+          <span>⏱ ${Math.round(s.duration/60)}h ${s.duration%60}m</span>
+          <span>${x(s.booking_status||"")}</span>
+        </div>
+        ${s.price_range?`<div style="font-size:11px;color:var(--muted);margin-top:3px">${x(s.price_range)}</div>`:""}
+        ${s.type==="Flight"&&s.airport_info?`<div style="font-size:11px;color:var(--blue);margin-top:3px">✈️ ${x(s.airport_info)}</div>`:""}
+        ${s.booking_link?`<button class="book-btn" onclick="window.open('booking.html?name=${encodeURIComponent(s.name)}&type=${encodeURIComponent(s.type)}&time=${encodeURIComponent(s.time)}&from=${encodeURIComponent(src)}&to=${encodeURIComponent(dst)}&price=${encodeURIComponent(s.price_range||'₹450')}&platform=${encodeURIComponent(s.platform||'')}&reason=${encodeURIComponent(selectedReason)}','_blank')">Book →</button>`:""}
+      </div>`).join("")}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:7px">Confidence: ${Math.round((r.confidence||0)*100)}%</div>
+  </div>`;
+}
+
+function filterRoutes(routes) {
+  if (activeFilter==="All") return routes;
+  return routes.filter(r => r.steps?.some(s => s.type===activeFilter));
+}
+
+function showErr(msg) {
+  const box = document.getElementById("result");
+  box.style.display = "block";
+  box.innerHTML = `<div class="err-card"><div class="err-icon">⚠️</div><div class="err-msg">${x(msg)}</div></div>`;
+}
+
+function x(s) {
+  if (s==null) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
