@@ -1,4 +1,4 @@
-Helping Hands – Emergency Travel Decision AI
+Helping Hands – Emergency Travel Decision AI (PROTOTYPE)
 Overview
 
 Status: Proof of Concept · 2025–2026 
