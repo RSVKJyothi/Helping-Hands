@@ -24,5 +24,6 @@ Emergency Travel Decision AI
 FastAPI · React Native · Claude AI
 ## Future scope
 A Phone app in future.
+
 Built by:
 R S V K Jyothi
