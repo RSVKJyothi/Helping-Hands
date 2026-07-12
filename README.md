@@ -2,7 +2,7 @@
 ## 📖 Product Case Study
 
 👉 [View Full Case Study](docs/case-study.md)
-Emergency Travel Decision AI
+Emergency Travel Decision AI (PROTOTYPE)
 
 "What if an app could tell you exactly what to do in an emergency — not just show you options?"
 
